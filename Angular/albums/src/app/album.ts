@@ -21,6 +21,6 @@ export class List {
 // On peut également utiliser une interface
 export class Timer {
     hour: string;
-    min: string;
+    minute: string;
     second: string;
 }

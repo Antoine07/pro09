@@ -33,7 +33,7 @@ export class AppComponent {
         // padStart : longueur de la chaîne et caractère pour compléter : 08, 09, 10 ...
         return {
           hour: String( Math.floor(second / 3600 ) % 3600).padStart(2, '0'),
-          min: String( Math.floor(second / 60) % 60 ).padStart(2, '0'),
+          minute: String( Math.floor(second / 60) % 60 ).padStart(2, '0'),
           second: String(second % 60).padStart(2, '0')
         }
       })
