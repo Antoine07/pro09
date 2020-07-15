@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { AlbumService } from '../album.service';
-import { map, switchMap, takeUntil } from 'rxjs/operators';
+import { map, switchMap, takeUntil, take} from 'rxjs/operators';
 import { interval } from 'rxjs';
 import { Album } from '../album';
-import { ConsoleReporter } from 'jasmine';
 
 @Component({
   selector: 'app-audio-player',
@@ -13,7 +12,7 @@ import { ConsoleReporter } from 'jasmine';
 export class AudioPlayerComponent implements OnInit {
 
   ratio:number = 0
-  counter:number = 1;
+  counter : number = 0; // compte le nombre de morceaux
 
   songs : number = 0; // nombre de chansons
   songTime:number = 120; // chanson dure toute 2 minutes on compte en paquet de 120 secondes == 2 minutes
@@ -25,6 +24,8 @@ export class AudioPlayerComponent implements OnInit {
 
   listSongs : string[] = []; // la liste des chansons
 
+  songName : string;
+
   // le service doit s'injecter dans le composant et être privé
   constructor(private aS: AlbumService) {}
 
@@ -32,7 +33,9 @@ export class AudioPlayerComponent implements OnInit {
 
     // timer Observable qui envoit un entier toutes les minutes on met 10 au lieu de 1000 pour aller plus vide
     // dans l'affichage
-    const count$ = interval(10 * 60);
+
+    // Un morceau dure 2 minutes donc toutes les deux minutes on incrémente notre compteur
+    const interval$ = interval(10 * 60 * 2); // 0, 1, 2, ...
 
     // subjectAlbum est un Subject donc réversible : Observale/Observer
     // ici on le considère comme Observable il reçoit la données pour en faire quelque chose une fois que l'on a souscrit
@@ -40,11 +43,13 @@ export class AudioPlayerComponent implements OnInit {
     // 2. On souscrit pour récupérer la données
     const player$ = this.aS.subjectAlbum.pipe(
       // 1 pipeline ordre des pipes
-      map(album => {
+      map( album => {
         this.title = album.title; // le titre de l'album
 
         // On récupère la liste des chansons de l'album par décomposition d'objet
         const { list }= this.aS.getAlbumList(album.id);
+
+        console.log(list);
 
         this.songs = list.length; // nombre de chansons
 
@@ -57,44 +62,41 @@ export class AudioPlayerComponent implements OnInit {
       // le propre du switchMap c'est de renvoyer un Observable sans effet de bord
       switchMap( album => {
 
+        // nombre de chanson
         this.songs = album.duration / this.songTime;
         this.showplayer = true;
 
-        return count$.pipe(
-          map( minute => {
+        return interval$.pipe(
+          map( minutes => minutes + 1),
+          map( minutes => {
+            console.log('list chanson')
+            console.log(this.counter, this.listSongs[this.counter]);
+            this.songName = this.listSongs[this.counter];
+            this.counter++;
 
-            console.log(minute);
-
-            // chaque morceau de musique fait 2 minutes donc on incrémente le compteur en fonction
-            if( minute > 0 && minute % 2 === 0 ) this.counter++;
-
-            // ratio le nombre de minute(s) divisé par la durée
-            return   Math.ceil( (minute  / album.duration) * 100 * 60 );
+            // calcul du ratio du nombre de morceaux
+            // on multiplie par 100 pour avoir 2 chiffres après la virgule
+            return  Math.floor( (minutes * 60 * 2 / album.duration) * 100 ) / 100 ;
 
           }),
-          // Opérateur qui permet de stopper un observable, il attent un observable boolean
-          // takeUntil souscrit lui-même à l'observable
-          takeUntil(this.aS.destroy$)
-        )        
-      }),
+          take( this.songs )
+        )   
+      })
     );
 
     // On s'ouscrit à l'observable
     player$.subscribe( ratio => {
-      this.ratio = ratio;
-
-      console.log("test du ration", ratio);
-      if( ratio >= 100 ) this.reset();
+      this.ratio = ratio * 100 ;
+      
+      if( this.songs === this.counter) this.reset();
+      
     });
   }
 
   reset(){
-    this.showplayer = false;
     this.counter = 0;
-    this.songs = 0;
+    this.showplayer = false;
     this.ratio = 0;
-
-    this.aS.destroy$.next(true);
   }
 
 }
