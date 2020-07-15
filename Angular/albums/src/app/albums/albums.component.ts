@@ -16,12 +16,12 @@ export class AlbumsComponent implements OnInit {
   pos : number;
   status: string = null; // pour gérer l'affichage des caractères [play] 
 
-  constructor(private ablumService: AlbumService) {}
+  constructor(private aS: AlbumService) {}
 
   ngOnInit() {
-    this.albums = this.ablumService.paginate(
+    this.albums = this.aS.paginate(
       0,
-      this.ablumService.paginateNumberPage()
+      this.aS.paginateNumberPage()
       );
 
   }
@@ -30,8 +30,11 @@ export class AlbumsComponent implements OnInit {
     this.selectedAlbum = album;
   }
 
+  // event de l'enfant dans la variable $event un album 
   playParent($event){
     this.status = $event.id; // identifiant unique
+
+    this.aS.switchOn($event);
   }
 
   search($event) {
@@ -40,6 +43,6 @@ export class AlbumsComponent implements OnInit {
 
   // mise à jour de la pagination
   paginate($event) {
-    this.albums = this.ablumService.paginate($event.start, $event.end);
+    this.albums = this.aS.paginate($event.start, $event.end);
   }
 }

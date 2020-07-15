@@ -9,7 +9,8 @@ export class Album {
     status: string;
     url?: string;
     like?: string;
-    tags?: Array<string>
+    tags?: Array<string>;
+    notes? : Array<number>;
 }
 
 export class List {

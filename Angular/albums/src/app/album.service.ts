@@ -14,6 +14,13 @@ export class AlbumService {
   private _albumList: List[] = ALBUM_LISTS;
 
   sendCurrentNumberPage = new Subject<number>();
+    // Subject permettra de signifier que l'on vient de cliquer sur play au composant audio-player
+  // Observable & Observer il est réversible
+  subjectAlbum : Subject<Album> = new Subject<Album>();
+
+  // permet d'arret la lecture des morceaux 
+  destroy$ : Subject<boolean>  = new Subject<boolean>();
+  
 
   constructor() { }
 
@@ -70,5 +77,13 @@ export class AlbumService {
     // Observer notifie une information page ici numérique envoit le journal ...
     return this.sendCurrentNumberPage.next(numberPage);
   }
+
+  switchOn(album : Album){
+    album.status = 'on';
+    
+    // Subject notification envoyé à l'observable
+    this.subjectAlbum.next(album);
+  }
+  
 
 }
